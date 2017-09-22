@@ -39,14 +39,14 @@ let stack = [];
 
 let data = {};
 
-function toHex(data){
-  if(Array.isArray(data)){
-    for(let index in data){
-      for(let key in data[index]){
-        data[index][ key ] = data[index][ key ].toString(16);
+function toHex ( data ) {
+  if ( Array.isArray(data) ) {
+    for ( let index in data ) {
+      for ( let key in data[ index ] ) {
+        data[ index ][ key ] = data[ index ][ key ].toString(16);
       }
     }
-  }else {
+  } else {
     for ( let key in data ) {
       data[ key ] = data[ key ].toString(16);
     }
@@ -56,88 +56,87 @@ function toHex(data){
 }
 
 class ASMMachine {
-  setRegister(registerName, value){
-    if(allowedRegisters.allRegisters.indexOf(registerName) === -1)
+  setRegister ( registerName, value ) {
+    if ( allowedRegisters.allRegisters.indexOf(registerName) === -1 )
       throw new Error("Register with that name doesn't exist");
 
-    
-    if(registerName[registerName.length - 1] === 'h'){
-      
+
+    if ( registerName[ registerName.length - 1 ] === 'h' ) {
+
 
       // Leaving only 1 byte, clearing the rest and shifting it to the right by 8 bits
       value &= 0xFF;
       value <<= 8;
 
-      const twoByteRegister = registerName[0] + 'x';
+      const twoByteRegister = registerName[ 0 ] + 'x';
 
 
-      
       // Clearing the last byte
-      registers[twoByteRegister] &= 0xFF;
+      registers[ twoByteRegister ] &= 0xFF;
       // Setting the last byte
-      registers[twoByteRegister] |= value;
+      registers[ twoByteRegister ] |= value;
 
 
       return;
     }
 
-    if(registerName[registerName.length - 1] === 'l'){
+    if ( registerName[ registerName.length - 1 ] === 'l' ) {
       // Keeping only 1 byte of the value
       value &= 0xFF;
 
-      const twoByteRegister = registerName[0] + 'x';
+      const twoByteRegister = registerName[ 0 ] + 'x';
       // Clearing the first byte
-      registers[twoByteRegister] &= 0xFF00;
+      registers[ twoByteRegister ] &= 0xFF00;
       // Setting the first byte
-      registers[twoByteRegister] |= value;
+      registers[ twoByteRegister ] |= value;
       return;
     }
 
-    registers[registerName] = value;
+    registers[ registerName ] = value;
   }
 
-  getRegister(register){
-    if(allowedRegisters.allRegisters.indexOf(register) === -1)
+  getRegister ( register ) {
+    if ( allowedRegisters.allRegisters.indexOf(register) === -1 )
       throw new Error("Register with that name doesn't exist");
 
-    if(register[register.length - 1] === 'h'){
-      const twoByteRegister = register[0] + 'x';
-      
-      return registers[twoByteRegister] >>> 8;
+    if ( register[ register.length - 1 ] === 'h' ) {
+      const twoByteRegister = register[ 0 ] + 'x';
+
+      return registers[ twoByteRegister ] >>> 8;
     }
 
-    if(register[register.length - 1] === 'l'){
-      const twoByteRegister = register[0] + 'x';
-      return registers[twoByteRegister] & 0xFF;
+    if ( register[ register.length - 1 ] === 'l' ) {
+      const twoByteRegister = register[ 0 ] + 'x';
+      return registers[ twoByteRegister ] & 0xFF;
     }
 
-    return registers[register];
+    return registers[ register ];
   }
 
-  get registers(){
+  get registers () {
     return Object.assign({}, registers);
   }
 
-  get data(){
+  get data () {
     return Object.assign({}, data);
   }
 
-  get flags(){
+  get flags () {
     return Object.assign([], flags);
   }
 
-  get stack(){
-    return Object.assign([],stack);
+  get stack () {
+    return Object.assign([], stack);
   }
 
-  getStatus(){
+  getStatus () {
     return {
       data: this.data,
       registers: this.registers,
       stack: this.stack,
       flags: this.flags,
 
-      getHex: function(){
+      getHex: function () {
         return {
           data: toHex(this.data),
           registers: toHex(this.registers),

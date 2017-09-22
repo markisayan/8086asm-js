@@ -5,12 +5,12 @@ const AsmInterpreter = require("./interpreter");
 const asmInterpreter = new AsmInterpreter(asmMachine);
 
 class ASM {
-  interpret(command, callback){
+  interpret ( command, callback ) {
     asmInterpreter.interpret(command);
     callback(this.status);
   }
 
-  get status(){
+  get status () {
     return asmMachine.getStatus().getHex();
   }
 }

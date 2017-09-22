@@ -1,23 +1,23 @@
 "use strict";
 
 class AllowedRegisters {
-  get instructionPointerRegister(){
+  get instructionPointerRegister () {
     return [ "ip" ];
   }
 
-  get generalPurposeRegisters(){
+  get generalPurposeRegisters () {
     return [ "ax", "ah", "al", "bx", "bh", "bl", "cx", "ch", "cl", "dx", "dh", "dl" ];
   }
 
-  get segmentRegisters(){
+  get segmentRegisters () {
     return [ "es", "cs", "ss", "ds" ];
   }
 
-  get specialPurposeRegisters(){
+  get specialPurposeRegisters () {
     return [ "si", "di", "sp", "bp" ];
   }
 
-  get allRegisters(){
+  get allRegisters () {
     return [].concat.apply([], [
       this.instructionPointerRegister,
       this.generalPurposeRegisters,
@@ -27,4 +27,4 @@ class AllowedRegisters {
   }
 }
 
-module.exports =  new AllowedRegisters();
+module.exports = new AllowedRegisters();

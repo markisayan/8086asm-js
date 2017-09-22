@@ -3,8 +3,8 @@
 const argTypes = require("./argTypes");
 const allowedRegisters = require('./allowedRegisters');
 
-class ASMInterpreter{
-  constructor(machine){
+class ASMInterpreter {
+  constructor ( machine ) {
     this.commands = {
       add: "binaryArithmetic/add",
       // adc: "binaryArithmetic/adc",
@@ -12,40 +12,40 @@ class ASMInterpreter{
       // sbb: "binaryArithmetic/sbb"
     };
 
-    Object.keys(this.commands).forEach(key =>{
-      const Operation = require("./commands/" + this.commands[key]);
-      this.commands[key] = new Operation(machine);
+    Object.keys(this.commands).forEach(key => {
+      const Operation = require("./commands/" + this.commands[ key ]);
+      this.commands[ key ] = new Operation(machine);
     });
 
     this.machine = machine;
   }
 
-  isRegister(arg){
+  isRegister ( arg ) {
     return allowedRegisters.allRegisters.indexOf(arg) !== -1;
   }
 
-  isMemory(arg){
-    return this.machine.data[arg] !== undefined;
+  isMemory ( arg ) {
+    return this.machine.data[ arg ] !== undefined;
   }
 
-  isImmediateValue(arg){
+  isImmediateValue ( arg ) {
     return !this.isRegister(arg) && !this.isMemory(arg);
   }
 
-  isSegmentRegister(arg){
+  isSegmentRegister ( arg ) {
     return allowedRegisters.segmentRegisters.indexOf(arg) !== -1;
   }
 
-  isGeneralPurposeRegister(arg){
+  isGeneralPurposeRegister ( arg ) {
     return allowedRegisters.generalPurposeRegisters.indexOf(arg) !== -1;
   }
 
-  isImmediate(arg){
+  isImmediate ( arg ) {
     return !this.isRegister(arg) && !this.isMemory(arg);
   }
 
-  isCorrectArgType( arg, argType){
-    switch(argType) {
+  isCorrectArgType ( arg, argType ) {
+    switch ( argType ) {
       case argTypes.REGISTER:
         return this.isRegister(arg);
       case argTypes.IMMEDIATE:
@@ -61,24 +61,24 @@ class ASMInterpreter{
     }
   }
 
-  hasValidArgumentTypes(command, args){
-    for(let i = 0; i < args.length; i++) {
+  hasValidArgumentTypes ( command, args ) {
+    for ( let i = 0; i < args.length; i++ ) {
       let found = false;
-      for(let j = 0; j < command.commandArgTypes[i].length; j++){
-        let argType = command.commandArgTypes[i][j];
-        if(this.isCorrectArgType(args[i], argType)){
+      for ( let j = 0; j < command.commandArgTypes[ i ].length; j++ ) {
+        let argType = command.commandArgTypes[ i ][ j ];
+        if ( this.isCorrectArgType(args[ i ], argType) ) {
           found = true;
           break;
         }
       }
-      if(!found)
+      if ( !found )
         return false;
     }
     return true;
   }
 
-  splitToTokens(commandString){
-    let tokens = commandString.trim().replace( /,/g, " " ).split(" ");
+  splitToTokens ( commandString ) {
+    let tokens = commandString.trim().replace(/,/g, " ").split(" ");
 
     let filteredTokens = tokens.filter(token => {
       return token !== "";
@@ -87,23 +87,23 @@ class ASMInterpreter{
     return filteredTokens;
   }
 
-  interpret(string){
+  interpret ( string ) {
     const tokens = this.splitToTokens(string);
-    let [commandString, ...args] = tokens;
+    let [ commandString, ...args ] = tokens;
 
-    if(!this.commands[commandString]) {
+    if ( !this.commands[ commandString ] ) {
       throw new Error("Command doesn't exist");
     }
-    else{
-      let command = this.commands[commandString];
+    else {
+      let command = this.commands[ commandString ];
 
-      if(command.numArgs !== args.length){
+      if ( command.numArgs !== args.length ) {
         throw new Error("Wrong number of arguments");
       }
 
-      if(this.hasValidArgumentTypes(command, args)){
+      if ( this.hasValidArgumentTypes(command, args) ) {
         command.execute(args, this);
-      }else{
+      } else {
         throw new Error("Command arguments have wrong types");
       }
 
