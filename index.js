@@ -11,7 +11,7 @@ class ASM {
   }
 
   get status(){
-    return asmMachine.getStatus();
+    return asmMachine.getStatus().getHex();
   }
 }
 

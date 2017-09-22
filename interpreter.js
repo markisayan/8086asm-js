@@ -41,7 +41,7 @@ class ASMInterpreter{
   }
 
   isImmediate(arg){
-    return !isRegister(arg) && !isMemory(arg);
+    return !this.isRegister(arg) && !this.isMemory(arg);
   }
 
   isCorrectArgType( arg, argType){
@@ -63,19 +63,32 @@ class ASMInterpreter{
 
   hasValidArgumentTypes(command, args){
     for(let i = 0; i < args.length; i++) {
+      let found = false;
       for(let j = 0; j < command.commandArgTypes[i].length; j++){
         let argType = command.commandArgTypes[i][j];
         if(this.isCorrectArgType(args[i], argType)){
+          found = true;
           break;
         }
-        return false;
       }
+      if(!found)
+        return false;
     }
     return true;
   }
 
+  splitToTokens(commandString){
+    let tokens = commandString.trim().replace( /,/g, " " ).split(" ");
+
+    let filteredTokens = tokens.filter(token => {
+      return token !== "";
+    });
+
+    return filteredTokens;
+  }
+
   interpret(string){
-    const tokens = string.trim().replace( /,/g, "" ).split(" ");
+    const tokens = this.splitToTokens(string);
     let [commandString, ...args] = tokens;
 
     if(!this.commands[commandString]) {
@@ -84,7 +97,7 @@ class ASMInterpreter{
     else{
       let command = this.commands[commandString];
 
-      if(command.numArgs != args.length){
+      if(command.numArgs !== args.length){
         throw new Error("Wrong number of arguments");
       }
 

@@ -23,6 +23,11 @@ class Add extends AsmCommand{
     if(interpreter.isRegister(args[0]) && interpreter.isRegister(args[1])){
       this.machine.setRegister(args[0], this.machine.getRegister(args[0]) + this.machine.getRegister(args[1]));
     }
+    else if(interpreter.isRegister(args[0]) && interpreter.isImmediateValue(args[1])){
+      this.machine.setRegister(args[0], this.machine.getRegister(args[0]) + this.argumentsFromHexToDecimal(args[1]));
+    }
+    // TODO: HANDLE MEMORY PASSED AS ARG
+    // TODO: CHANGE FLAGS ACCORDINGLY
   }
 }
 

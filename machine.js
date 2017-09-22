@@ -5,7 +5,7 @@ let registers = {
   ax: 1,
   cx: 0,
   dx: 0,
-  bx: 2,
+  bx: 9,
   sp: 0,
   bp: 0,
   si: 0,
@@ -39,32 +39,61 @@ let stack = [];
 
 let data = {};
 
+function toHex(data){
+  if(Array.isArray(data)){
+    for(let index in data){
+      for(let key in data[index]){
+        data[index][ key ] = data[index][ key ].toString(16);
+      }
+    }
+  }else {
+    for ( let key in data ) {
+      data[ key ] = data[ key ].toString(16);
+    }
+  }
+
+  return data;
+}
+
 class ASMMachine {
-  setRegister(register, value){
-    if(allowedRegisters.allRegisters.indexOf(register) === -1)
+  setRegister(registerName, value){
+    if(allowedRegisters.allRegisters.indexOf(registerName) === -1)
       throw new Error("Register with that name doesn't exist");
 
-    if(register[register.length - 1] === 'h'){
+    
+    if(registerName[registerName.length - 1] === 'h'){
+      
+
+      // Leaving only 1 byte, clearing the rest and shifting it to the right by 8 bits
       value &= 0xFF;
       value <<= 8;
 
-      const fullRegister = register[0] + 'x';
+      const twoByteRegister = registerName[0] + 'x';
 
-      registers[fullRegister] &= 0xFF;
-      registers[fullRegister] |= value;
+
+      
+      // Clearing the last byte
+      registers[twoByteRegister] &= 0xFF;
+      // Setting the last byte
+      registers[twoByteRegister] |= value;
+
+
       return;
     }
 
-    if(register[register.length - 1] === 'l'){
+    if(registerName[registerName.length - 1] === 'l'){
+      // Keeping only 1 byte of the value
       value &= 0xFF;
 
-      const fullRegister = register[0] + 'x';
-      registers[fullRegister] &= 0xFF00;
-      registers[fullRegister] |= value;
+      const twoByteRegister = registerName[0] + 'x';
+      // Clearing the first byte
+      registers[twoByteRegister] &= 0xFF00;
+      // Setting the first byte
+      registers[twoByteRegister] |= value;
       return;
     }
 
-    registers[register] = value;
+    registers[registerName] = value;
   }
 
   getRegister(register){
@@ -72,13 +101,14 @@ class ASMMachine {
       throw new Error("Register with that name doesn't exist");
 
     if(register[register.length - 1] === 'h'){
-      const fullRegister = register[0] + 'x';
-      return registers[fullRegister] >>> 8;
+      const twoByteRegister = register[0] + 'x';
+      
+      return registers[twoByteRegister] >>> 8;
     }
 
     if(register[register.length - 1] === 'l'){
-      const fullRegister = register[0] + 'x';
-      return registers[fullRegister] & 0xFF;
+      const twoByteRegister = register[0] + 'x';
+      return registers[twoByteRegister] & 0xFF;
     }
 
     return registers[register];
@@ -93,11 +123,11 @@ class ASMMachine {
   }
 
   get flags(){
-    return Object.assign({}, flags);
+    return Object.assign([], flags);
   }
 
   get stack(){
-    return Object.assign({}, stack);
+    return Object.assign([],stack);
   }
 
   getStatus(){
@@ -105,7 +135,16 @@ class ASMMachine {
       data: this.data,
       registers: this.registers,
       stack: this.stack,
-      flags: this.flags
+      flags: this.flags,
+
+      getHex: function(){
+        return {
+          data: toHex(this.data),
+          registers: toHex(this.registers),
+          stack: this.stack,
+          flags: toHex(this.flags),
+        }
+      }
     }
   }
 }

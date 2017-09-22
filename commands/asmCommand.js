@@ -6,6 +6,10 @@ class AsmCommand{
     this.machine = machine;
     this.commandArgTypes = commandArgTypes;
   }
+
+  argumentsFromHexToDecimal(arg){
+    return parseInt(arg, 16)
+  }
 }
 
 module.exports = AsmCommand;
