@@ -5,12 +5,13 @@ const AsmInterpreter = require("./interpreter");
 const asmInterpreter = new AsmInterpreter(asmMachine);
 
 class ASM {
-  interpret(command){
+  interpret(command, callback){
     asmInterpreter.interpret(command);
+    callback(this.status);
   }
 
   get status(){
-    return asmMachine;
+    return asmMachine.getStatus();
   }
 }
 

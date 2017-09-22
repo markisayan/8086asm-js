@@ -1,11 +1,20 @@
 "use strict";
 
 class AllowedRegisters {
-  constructor () {
-    this.instructionPointerRegister = [ "ip" ];
-    this.generalPurposeRegisters = [ "ax", "ah", "al", "bx", "bh", "bl", "cx", "ch", "cl", "dx", "dh", "dl" ];
-    this.segmentRegisters = [ "es", "cs", "ss", "ds" ];
-    this.specialPurposeRegisters = [ "si", "di", "sp", "bp" ];
+  get instructionPointerRegister(){
+    return [ "ip" ];
+  }
+
+  get generalPurposeRegisters(){
+    return [ "ax", "ah", "al", "bx", "bh", "bl", "cx", "ch", "cl", "dx", "dh", "dl" ];
+  }
+
+  get segmentRegisters(){
+    return [ "es", "cs", "ss", "ds" ];
+  }
+
+  get specialPurposeRegisters(){
+    return [ "si", "di", "sp", "bp" ];
   }
 
   get allRegisters(){

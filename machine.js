@@ -2,10 +2,10 @@
 const allowedRegisters = require('./allowedRegisters');
 
 let registers = {
-  ax: 0,
+  ax: 1,
   cx: 0,
   dx: 0,
-  bx: 0,
+  bx: 2,
   sp: 0,
   bp: 0,
   si: 0,
@@ -41,7 +41,7 @@ let data = {};
 
 class ASMMachine {
   setRegister(register, value){
-    if(allowedRegisters.indexOf(register) === -1)
+    if(allowedRegisters.allRegisters.indexOf(register) === -1)
       throw new Error("Register with that name doesn't exist");
 
     if(register[register.length - 1] === 'h'){
@@ -68,7 +68,7 @@ class ASMMachine {
   }
 
   getRegister(register){
-    if(allowedRegisters.indexOf(register) === -1)
+    if(allowedRegisters.allRegisters.indexOf(register) === -1)
       throw new Error("Register with that name doesn't exist");
 
     if(register[register.length - 1] === 'h'){
@@ -84,8 +84,29 @@ class ASMMachine {
     return registers[register];
   }
 
-  getRegisters(){
+  get registers(){
     return Object.assign({}, registers);
+  }
+
+  get data(){
+    return Object.assign({}, data);
+  }
+
+  get flags(){
+    return Object.assign({}, flags);
+  }
+
+  get stack(){
+    return Object.assign({}, stack);
+  }
+
+  getStatus(){
+    return {
+      data: this.data,
+      registers: this.registers,
+      stack: this.stack,
+      flags: this.flags
+    }
   }
 }
 

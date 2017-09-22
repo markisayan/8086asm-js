@@ -2,7 +2,6 @@
 
 const argTypes = require("./argTypes");
 const allowedRegisters = require('./allowedRegisters');
-const ArgTypeHelper = require('./argTypeHelper');
 
 class ASMInterpreter{
   constructor(machine){
@@ -45,7 +44,7 @@ class ASMInterpreter{
     return !isRegister(arg) && !isMemory(arg);
   }
 
-  isCorrectType(arg, argType){
+  isCorrectArgType( arg, argType){
     switch(argType) {
       case argTypes.REGISTER:
         return this.isRegister(arg);
@@ -67,29 +66,29 @@ class ASMInterpreter{
       for(let j = 0; j < command.commandArgTypes[i].length; j++){
         let argType = command.commandArgTypes[i][j];
         if(this.isCorrectArgType(args[i], argType)){
-          continue;
+          break;
         }
+        return false;
       }
-      return false;
     }
     return true;
   }
 
   interpret(string){
-    const tokens = string.trim().split(" ");
-    const [commandString, ...args] = tokens;
+    const tokens = string.trim().replace( /,/g, "" ).split(" ");
+    let [commandString, ...args] = tokens;
 
-    if(!commands[commandString]) {
+    if(!this.commands[commandString]) {
       throw new Error("Command doesn't exist");
     }
     else{
-      let command = commands[commandString];
+      let command = this.commands[commandString];
 
       if(command.numArgs != args.length){
         throw new Error("Wrong number of arguments");
       }
 
-      if(hasValidArgumentTypes(command, args)){
+      if(this.hasValidArgumentTypes(command, args)){
         command.execute(args, this);
       }else{
         throw new Error("Command arguments have wrong types");

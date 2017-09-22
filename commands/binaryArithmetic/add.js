@@ -21,7 +21,7 @@ class Add extends AsmCommand{
 
   execute(args, interpreter){
     if(interpreter.isRegister(args[0]) && interpreter.isRegister(args[1])){
-      this.machine.setRegister(args[0], )
+      this.machine.setRegister(args[0], this.machine.getRegister(args[0]) + this.machine.getRegister(args[1]));
     }
   }
 }
