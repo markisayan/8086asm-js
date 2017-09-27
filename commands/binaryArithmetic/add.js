@@ -4,7 +4,7 @@ const AsmCommand = require("../asmCommand");
 const argTypes = require("../../argTypes");
 
 class Add extends AsmCommand {
-  constructor ( machine ) {
+  constructor ( machine, interpreter ) {
     let commandArgTypes = [
       [
         argTypes.REGISTER,
@@ -16,17 +16,63 @@ class Add extends AsmCommand {
         argTypes.IMMEDIATE
       ]
     ];
-    super(machine, commandArgTypes);
+    super(machine, interpreter, commandArgTypes);
   }
 
-  execute ( args, interpreter ) {
-    if ( interpreter.isRegister(args[ 0 ]) && interpreter.isRegister(args[ 1 ]) ) {
-      this.machine.setRegister(args[ 0 ], this.machine.getRegister(args[ 0 ]) + this.machine.getRegister(args[ 1 ]));
+  setFlags(dest, src){
+
+  }
+
+  execute ( args ) {
+    if(this.interpreter.isMemory(args[0]) && this.interpreter.isMemory(args[1])){
+      throw new Error("Arguments can't be both a memory address");
     }
-    else if ( interpreter.isRegister(args[ 0 ]) && interpreter.isImmediateValue(args[ 1 ]) ) {
-      this.machine.setRegister(args[ 0 ], this.machine.getRegister(args[ 0 ]) + this.fromHexToDecimal(args[ 1 ]));
+
+    if ( this.interpreter.isRegister(args[ 0 ]) && this.interpreter.isRegister(args[ 1 ]) ) {
+      let destRegName = args[0];
+      let destRegVal = this.machine.getRegisterValue( destRegName );
+
+      let srcRegName = args[1];
+      let srcRegVal = this.machine.getRegisterValue( srcRegName );
+
+      this.machine.setRegisterValue(destRegName, destRegVal + srcRegVal);
     }
-    // TODO: HANDLE MEMORY PASSED AS ARG
+    else if ( this.interpreter.isRegister(args[ 0 ]) && this.interpreter.isImmediate(args[ 1 ]) ) {
+      let destRegName = args[0];
+      let destRegVal = this.machine.getRegisterValue( destRegName );
+
+      let srcImmValue = this.fromHexToDecimal(args[1]);
+
+      this.machine.setRegisterValue(destRegName, srcImmValue + destRegVal);
+    }
+    else if( this.interpreter.isRegister(args[0]) && this.interpreter.isMemory(args[1])){
+      let destRegName = args[0];
+      let destRegVal = this.machine.getRegisterValue(destRegName);
+
+      let srcMemAddress = this.machine.getRegisterValue(args[1].substr(1, args[1].length - 2));
+      let srcMemVal = this.machine.getMemoryValue(srcMemAddress);
+
+      this.machine.setRegisterValue(destRegName, destRegVal + srcMemVal);
+    }
+    else if(this.interpreter.isMemory(args[0]) && this.interpreter.isRegister(args[1])){
+      let destMemAddr = this.machine.getRegisterValue(args[0].substr(1, args[0].length - 2));
+      let destMemVal = this.machine.getMemoryValue(destMemAddr);
+
+      let srcRegName = args[1];
+      let srcRegVal = this.machine.getRegisterValue(srcRegName);
+
+      this.machine.setMemoryValue(destMemAddr, destMemVal + srcRegVal);
+
+    }
+    else if (this.interpreter.isMemory(args[0]) && this.interpreter.isImmediate(args[1])){
+      let destMemAddr = this.machine.getRegisterValue(args[0].substr(1, args[0].length - 2));
+      let destMemVal = this.machine.getMemoryValue(destMemAddr);
+
+      let srcImmVal = parseInt(args[1], 16);
+
+      this.machine.setMemoryValue(destMemAddr, destMemVal + srcImmVal);
+    }
+
     // TODO: CHANGE FLAGS ACCORDINGLY
   }
 }

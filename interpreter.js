@@ -14,7 +14,7 @@ class ASMInterpreter {
 
     Object.keys(this.commands).forEach(key => {
       const Operation = require("./commands/" + this.commands[ key ]);
-      this.commands[ key ] = new Operation(machine);
+      this.commands[ key ] = new Operation(machine, this);
     });
 
     this.machine = machine;
@@ -25,11 +25,7 @@ class ASMInterpreter {
   }
 
   isMemory ( arg ) {
-    return this.machine.data[ arg ] !== undefined;
-  }
-
-  isImmediateValue ( arg ) {
-    return !this.isRegister(arg) && !this.isMemory(arg);
+    return arg[0] === "[" && arg[arg.length - 1] === "]" && this.isRegister(arg.substr(1, arg.length - 2));
   }
 
   isSegmentRegister ( arg ) {
@@ -78,6 +74,7 @@ class ASMInterpreter {
   }
 
   splitToTokens ( commandString ) {
+    commandString = commandString.toLowerCase();
     let tokens = commandString.trim().replace(/,/g, " ").split(" ");
 
     let filteredTokens = tokens.filter(token => {

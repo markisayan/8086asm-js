@@ -37,7 +37,7 @@ let flags = [
 
 let stack = [];
 
-let data = {};
+let memory = {};
 
 function toHex ( data ) {
   if ( Array.isArray(data) ) {
@@ -55,28 +55,30 @@ function toHex ( data ) {
   return data;
 }
 
+function isHex ( value ) {
+  let a = parseInt(value, 16);
+  return ( a.toString(16) === value.toLowerCase() );
+}
+
+function isValidAddresFormat ( address ) {
+  return ( typeof address === "string" && isHex(address) );
+}
+
 class ASMMachine {
-  setRegister ( registerName, value ) {
+  setRegisterValue ( registerName, value ) {
     if ( allowedRegisters.allRegisters.indexOf(registerName) === -1 )
       throw new Error("Register with that name doesn't exist");
 
-
     if ( registerName[ registerName.length - 1 ] === 'h' ) {
-
-
       // Leaving only 1 byte, clearing the rest and shifting it to the right by 8 bits
       value &= 0xFF;
       value <<= 8;
 
       const twoByteRegister = registerName[ 0 ] + 'x';
-
-
       // Clearing the last byte
       registers[ twoByteRegister ] &= 0xFF;
       // Setting the last byte
       registers[ twoByteRegister ] |= value;
-
-
       return;
     }
 
@@ -95,7 +97,7 @@ class ASMMachine {
     registers[ registerName ] = value;
   }
 
-  getRegister ( register ) {
+  getRegisterValue ( register ) {
     if ( allowedRegisters.allRegisters.indexOf(register) === -1 )
       throw new Error("Register with that name doesn't exist");
 
@@ -113,12 +115,27 @@ class ASMMachine {
     return registers[ register ];
   }
 
+  setMemoryValue ( address, value ) {
+    address = parseInt(address, 16);
+
+    memory[ address ] = value
+  }
+
+  getMemoryValue ( address ) {
+    address = parseInt(address, 16);
+
+    if ( !memory[ address ] )
+      memory[ address ] = Math.floor(Math.random() * 0xFF);
+
+    return memory[ address ];
+  }
+
   get registers () {
     return Object.assign({}, registers);
   }
 
-  get data () {
-    return Object.assign({}, data);
+  get memory () {
+    return Object.assign({}, memory);
   }
 
   get flags () {
@@ -131,14 +148,14 @@ class ASMMachine {
 
   getStatus () {
     return {
-      data: this.data,
+      memory: this.memory,
       registers: this.registers,
       stack: this.stack,
       flags: this.flags,
 
       getHex: function () {
         return {
-          data: toHex(this.data),
+          memory: toHex(this.memory),
           registers: toHex(this.registers),
           stack: this.stack,
           flags: toHex(this.flags),
