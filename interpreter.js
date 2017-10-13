@@ -9,7 +9,8 @@ class ASMInterpreter {
       add: "binaryArithmetic/add",
       // adc: "binaryArithmetic/adc",
       // sub: "binaryArithmetic/sub",
-      // sbb: "binaryArithmetic/sbb"
+      // sbb: "binaryArithmetic/sbb",
+      mov: "move/mov"
     };
 
     Object.keys(this.commands).forEach(key => {
@@ -36,8 +37,20 @@ class ASMInterpreter {
     return allowedRegisters.generalPurposeRegisters.indexOf(arg) !== -1;
   }
 
+  isSpecialPurposeRegister (arg){
+    return allowedRegisters.specialPurposeRegisters.indexOf(arg) !== -1;
+  }
+
+  isTwoByteRegister(arg){
+    return !this.isOneByteRegister(arg) ;
+  }
+
+  isOneByteRegister(arg){
+    return this.isRegister(arg) && (arg[arg.length - 1] === 'h' || arg[arg.length -1] === 'l');
+  }
+
   isImmediate ( arg ) {
-    return !this.isRegister(arg) && !this.isMemory(arg);
+    return !this.isRegister(arg) && !this.isMemory(arg) && (parseInt(arg, 16) || parseInt(arg, 16) === 0);
   }
 
   isCorrectArgType ( arg, argType ) {

@@ -4,14 +4,16 @@ const AsmCommand = require("../asmCommand");
 const argTypes = require("../../argTypes");
 
 class Add extends AsmCommand {
-  constructor ( machine, interpreter ) {
+  constructor(machine, interpreter) {
     let commandArgTypes = [
       [
         argTypes.REGISTER,
+        argTypes.SPECIAL_PURPOSE_REGISTER,
         argTypes.MEMORY
       ],
       [
         argTypes.REGISTER,
+        argTypes.SPECIAL_PURPOSE_REGISTER,
         argTypes.MEMORY,
         argTypes.IMMEDIATE
       ]
@@ -19,61 +21,154 @@ class Add extends AsmCommand {
     super(machine, interpreter, commandArgTypes);
   }
 
-  setFlags(dest, src){
+  setPf(result) {
+    let numOfOnes = 0;
 
+    while (result !== 0) {
+      numOfOnes += result & 1;
+      result >>>= 1;
+    }
+
+    this.machine.setFlagValue("pf", + !(numOfOnes & 1));
   }
 
-  execute ( args ) {
-    if(this.interpreter.isMemory(args[0]) && this.interpreter.isMemory(args[1])){
+  setZf(result) {
+    this.machine.setFlagValue("zf", + (result === 0));
+  }
+
+  setOf(firstVal, secondVal, result) {
+    const ofValue = ( ((firstVal >>> 15) & 1) === 0 && ((secondVal >>> 15) & 1) === 0 && ((result >>> 15) & 1) === 1 ||
+      (( firstVal >>> 15) & 1) === 1 && ((secondVal >>> 15) & 1) === 1 && ((result >>> 15) & 1) === 0);
+
+    this.machine.setFlagValue("of", + ofValue);
+  }
+
+  setCf(result) {
+    this.machine.setFlagValue("cf", +((result & 0xFFFF) !== 0));
+  }
+
+  setSf(result) {
+    this.machine.setFlagValue("sf", (result & 0xFFFF) >>> 15);
+  }
+
+  setAf(oldVal, result) {
+    this.machine.setFlagValue("af", + (((oldVal >> 2) & 1 === 0) && ((result >> 2) & 1) === 1));
+  }
+
+  setFlags(destVal, srcVal, result){
+    this.setCf(result);
+    this.setPf(result);
+    this.setSf(result);
+    this.setZf(result);
+    this.setAf(destVal, result);
+    this.setOf(destVal, srcVal, result);
+  }
+
+  execute(args) {
+    let [dest, src] = [...args];
+
+    if (this.interpreter.isMemory(dest) && this.interpreter.isMemory(src)) {
       throw new Error("Arguments can't be both a memory address");
     }
 
-    if ( this.interpreter.isRegister(args[ 0 ]) && this.interpreter.isRegister(args[ 1 ]) ) {
-      let destRegName = args[0];
-      let destRegVal = this.machine.getRegisterValue( destRegName );
+    if (this.interpreter.isRegister(dest) && this.interpreter.isRegister(src)) {
+      if (dest[dest.length - 1] !== src[src.length - 1]) {
+        throw new Error("Registers should have the same size");
+      }
 
-      let srcRegName = args[1];
-      let srcRegVal = this.machine.getRegisterValue( srcRegName );
+      const destRegName = dest;
+      const destRegVal = this.machine.getRegisterValue(destRegName);
 
-      this.machine.setRegisterValue(destRegName, destRegVal + srcRegVal);
+      const srcRegName = src;
+      const srcRegVal = this.machine.getRegisterValue(srcRegName);
+
+      const result = destRegVal + srcRegVal;
+      this.setFlags(destRegVal, srcRegVal, result);
+
+      this.machine.setRegisterValue(destRegName, result & 0xFFFF);
     }
-    else if ( this.interpreter.isRegister(args[ 0 ]) && this.interpreter.isImmediate(args[ 1 ]) ) {
-      let destRegName = args[0];
-      let destRegVal = this.machine.getRegisterValue( destRegName );
+    else if (this.interpreter.isRegister(dest) && this.interpreter.isImmediate(src)) {
+      const destRegName = dest;
+      const destRegVal = this.machine.getRegisterValue(destRegName);
 
-      let srcImmValue = this.fromHexToDecimal(args[1]);
+      const srcImmVal = this.fromHexToDecimal(src);
 
-      this.machine.setRegisterValue(destRegName, srcImmValue + destRegVal);
+      const result = srcImmVal + destRegVal;
+      
+      this.setFlags(destRegVal, srcImmVal, result);
+
+      this.machine.setRegisterValue(destRegName, result & 0xFFFF);
     }
-    else if( this.interpreter.isRegister(args[0]) && this.interpreter.isMemory(args[1])){
-      let destRegName = args[0];
-      let destRegVal = this.machine.getRegisterValue(destRegName);
+    else if (this.interpreter.isRegister(dest) && this.interpreter.isMemory(src)) {
 
-      let srcMemAddress = this.machine.getRegisterValue(args[1].substr(1, args[1].length - 2));
-      let srcMemVal = this.machine.getMemoryValue(srcMemAddress);
+      const destRegName = dest;
+      const destRegVal = this.machine.getRegisterValue(destRegName);
 
-      this.machine.setRegisterValue(destRegName, destRegVal + srcMemVal);
+      const srcMemAddress = this.machine.getRegisterValue(src.substr(1, src.length - 2));
+      let srcMemVal = 0;
+
+      if (this.interpreter.isTwoByteRegister(dest)) {
+        let srcMemValLo = this.machine.getMemoryValue(srcMemAddress);
+        let srcMemValHi = this.machine.getMemoryValue(srcMemAddress + 1);
+
+        srcMemVal = srcMemValHi;
+        srcMemVal <<= 8;
+        srcMemVal |= srcMemValLo;
+      } else {
+        srcMemVal = this.machine.getMemoryValue(srcMemAddress);
+      }
+      
+      const result = destRegVal + srcMemVal;
+
+      this.setFlags(destRegVal, srcMemVal, result);
+
+      this.machine.setRegisterValue(destRegName, result & 0xFFFF);
     }
-    else if(this.interpreter.isMemory(args[0]) && this.interpreter.isRegister(args[1])){
-      let destMemAddr = this.machine.getRegisterValue(args[0].substr(1, args[0].length - 2));
-      let destMemVal = this.machine.getMemoryValue(destMemAddr);
+    else if (this.interpreter.isMemory(dest) && this.interpreter.isRegister(src)) {
+      const srcRegName = src;
+      const srcRegVal = this.machine.getRegisterValue(srcRegName);
 
-      let srcRegName = args[1];
-      let srcRegVal = this.machine.getRegisterValue(srcRegName);
+      if (this.interpreter.isTwoByteRegister(srcRegName)) {
+        const destMemAddrLo = this.machine.getRegisterValue(dest.substr(1, dest.length - 2));
+        const destMemValLo = this.machine.getMemoryValue(destMemAddrLo);
 
-      this.machine.setMemoryValue(destMemAddr, destMemVal + srcRegVal);
+        const destMemAddrHi = destMemAddrLo + 1;
+        const destMemValHi = this.machine.getMemoryValue(destMemAddrHi);
+
+        let destMemVal = destMemValHi;
+        destMemVal <<= 8;
+        destMemVal |= destMemValLo;
+
+        const result = destMemVal + srcRegVal;
+
+        this.setFlage(destMemVal, srcRegVal, result)
+
+        this.machine.setMemoryValue(destMemAddrLo, result & 0xFF);
+        this.machine.setMemoryValue(destMemAddrHi, (result >>> 8) & 0xFF);
+      } else {
+        const destMemAddr = this.machine.getRegisterValue(dest.substr(1, dest.length - 2));
+        const destMemVal = this.machine.getMemoryValue(destMemAddr);
+
+        const result = destMemVal + srcRegVal;
+
+        this.setFlags(destMemVal, srcRegVal, result);
+
+        this.machine.setMemoryValue(destMemAddr, result & 0xFFFF);
+      }
 
     }
-    else if (this.interpreter.isMemory(args[0]) && this.interpreter.isImmediate(args[1])){
-      let destMemAddr = this.machine.getRegisterValue(args[0].substr(1, args[0].length - 2));
-      let destMemVal = this.machine.getMemoryValue(destMemAddr);
+    else if (this.interpreter.isMemory(dest) && this.interpreter.isImmediate(src)) {
+      const destMemAddr = this.machine.getRegisterValue(dest.substr(1, dest.length - 2));
+      const destMemVal = this.machine.getMemoryValue(destMemAddr);
 
-      let srcImmVal = parseInt(args[1], 16);
+      const srcImmVal = parseInt(src, 16);
+      
+      const result = destMemVal + srcImmVal;
 
-      this.machine.setMemoryValue(destMemAddr, destMemVal + srcImmVal);
+      this.setFlags(destMemVal, srcImmVal, result);
+
+      this.machine.setMemoryValue(destMemAddr, result);
     }
-
-    // TODO: CHANGE FLAGS ACCORDINGLY
   }
 }
 

@@ -17,23 +17,19 @@ let registers = {
   ip: 0
 };
 
-let flags = [
-  { cf: 0 },
-  { unknown: 1 },
-  { pf: 0 },
-  { unknown: 0 },
-  { af: 0 },
-  { unknown: 0 },
-  { zf: 0 },
-  { sf: 0 },
-  { tf: 0 },
-  { if: 0 },
-  { df: 0 },
-  { of: 0 },
-  { iopl: 0 },
-  { nt: 0 },
-  { unknown: 0 }
-];
+let flags = {
+  cf: 0,
+  pf: 0,
+  af: 0,
+  zf: 0,
+  sf: 0,
+  tf: 0,
+  if: 0,
+  df: 0,
+  of: 0,
+  iopl: 0,
+  nt: 0
+};
 
 let stack = [];
 
@@ -128,6 +124,14 @@ class ASMMachine {
       memory[ address ] = Math.floor(Math.random() * 0xFF);
 
     return memory[ address ];
+  }
+
+  setFlagValue(flag, value){
+    flags[flag] = value;
+  }
+
+  getFlagValue(flag){
+    return flags[flag];
   }
 
   get registers () {
