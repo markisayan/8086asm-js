@@ -7,12 +7,12 @@ class Add extends AsmCommand {
   constructor(machine, interpreter) {
     let commandArgTypes = [
       [
-        argTypes.REGISTER,
+        argTypes.GENERAL_PURPOSE_REGISTER,
         argTypes.SPECIAL_PURPOSE_REGISTER,
         argTypes.MEMORY
       ],
       [
-        argTypes.REGISTER,
+        argTypes.GENERAL_PURPOSE_REGISTER,
         argTypes.SPECIAL_PURPOSE_REGISTER,
         argTypes.MEMORY,
         argTypes.IMMEDIATE
@@ -29,30 +29,33 @@ class Add extends AsmCommand {
       result >>>= 1;
     }
 
-    this.machine.setFlagValue("pf", + !(numOfOnes & 1));
+    this.machine.setFlagValue("pf", (numOfOnes & 1) | 0);
   }
 
   setZf(result) {
-    this.machine.setFlagValue("zf", + (result === 0));
+    this.machine.setFlagValue("zf", (result === 0) | 0);
   }
 
   setOf(firstVal, secondVal, result) {
     const ofValue = ( ((firstVal >>> 15) & 1) === 0 && ((secondVal >>> 15) & 1) === 0 && ((result >>> 15) & 1) === 1 ||
       (( firstVal >>> 15) & 1) === 1 && ((secondVal >>> 15) & 1) === 1 && ((result >>> 15) & 1) === 0);
 
-    this.machine.setFlagValue("of", + ofValue);
+    this.machine.setFlagValue("of", ofValue | 0);
   }
 
   setCf(result) {
-    this.machine.setFlagValue("cf", +((result & 0xFFFF) !== 0));
+    this.machine.setFlagValue("cf", ((result & 0x0000) !== 0) | 0);
   }
 
   setSf(result) {
     this.machine.setFlagValue("sf", (result & 0xFFFF) >>> 15);
   }
 
-  setAf(oldVal, result) {
-    this.machine.setFlagValue("af", + (((oldVal >> 2) & 1 === 0) && ((result >> 2) & 1) === 1));
+  setAf(srcVal, destVal) {
+    const lowNibbleSrcVal = srcVal & 0xf;
+    const lowNibbleDestVal = destVal & 0xf;
+    const sum = lowNibbleSrcVal + lowNibbleDestVal;
+    this.machine.setFlagValue("af", (sum >>> 4) | 0);
   }
 
   setFlags(destVal, srcVal, result){
@@ -60,8 +63,9 @@ class Add extends AsmCommand {
     this.setPf(result);
     this.setSf(result);
     this.setZf(result);
-    this.setAf(destVal, result);
+    this.setAf(srcVal, destVal);
     this.setOf(destVal, srcVal, result);
+    this.machine.setFlagValue("if", 1);
   }
 
   execute(args) {
@@ -72,7 +76,7 @@ class Add extends AsmCommand {
     }
 
     if (this.interpreter.isRegister(dest) && this.interpreter.isRegister(src)) {
-      if (dest[dest.length - 1] !== src[src.length - 1]) {
+      if (this.interpreter.isTwoByteRegister(src) !== this.interpreter.isTwoByteRegister(dest)) {
         throw new Error("Registers should have the same size");
       }
 
@@ -83,7 +87,13 @@ class Add extends AsmCommand {
       const srcRegVal = this.machine.getRegisterValue(srcRegName);
 
       const result = destRegVal + srcRegVal;
-      this.setFlags(destRegVal, srcRegVal, result);
+
+      if(this.interpreter.isOneByteRegister(srcRegName)) {
+        const twoByteSrcVal = this.machine.getRegisterValue(srcRegName[0] + 'x');
+        const twoByteDestVal = this.machine.getRegisterValue(destRegName[0] + 'x');
+
+        this.setFlags( twoByteDestVal, twoByteSrcVal, result );
+      }
 
       this.machine.setRegisterValue(destRegName, result & 0xFFFF);
     }
@@ -91,16 +101,23 @@ class Add extends AsmCommand {
       const destRegName = dest;
       const destRegVal = this.machine.getRegisterValue(destRegName);
 
-      const srcImmVal = this.fromHexToDecimal(src);
+      const srcImmVal = this.fromHexToImmediate(src);
+
+      if(this.interpreter.isOneByteRegister(dest) && srcImmVal > 0xff){
+        throw new Error("Value is bigger than 1 byte");
+      }
+
+      if(this.interpreter.isTwoByteRegister(dest) && srcImmVal > 0xffff){
+        throw new Error("Value is bigger than 2 bytes");
+      }
 
       const result = srcImmVal + destRegVal;
-      
+
       this.setFlags(destRegVal, srcImmVal, result);
 
       this.machine.setRegisterValue(destRegName, result & 0xFFFF);
     }
     else if (this.interpreter.isRegister(dest) && this.interpreter.isMemory(src)) {
-
       const destRegName = dest;
       const destRegVal = this.machine.getRegisterValue(destRegName);
 
@@ -117,7 +134,7 @@ class Add extends AsmCommand {
       } else {
         srcMemVal = this.machine.getMemoryValue(srcMemAddress);
       }
-      
+
       const result = destRegVal + srcMemVal;
 
       this.setFlags(destRegVal, srcMemVal, result);
@@ -141,7 +158,7 @@ class Add extends AsmCommand {
 
         const result = destMemVal + srcRegVal;
 
-        this.setFlage(destMemVal, srcRegVal, result)
+        this.setFlage(destMemVal, srcRegVal, result);
 
         this.machine.setMemoryValue(destMemAddrLo, result & 0xFF);
         this.machine.setMemoryValue(destMemAddrHi, (result >>> 8) & 0xFF);
@@ -162,12 +179,12 @@ class Add extends AsmCommand {
       const destMemVal = this.machine.getMemoryValue(destMemAddr);
 
       const srcImmVal = parseInt(src, 16);
-      
+
       const result = destMemVal + srcImmVal;
 
       this.setFlags(destMemVal, srcImmVal, result);
 
-      this.machine.setMemoryValue(destMemAddr, result);
+      this.machine.setMemoryValue(destMemAddr, result & 0xFF);
     }
   }
 }

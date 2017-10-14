@@ -1,0 +1,33 @@
+{
+  "name": "8086asm-js",
+  "version": "0.0.1",
+  "description": "8086 assembler emulator",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markisayan/x86asm-js.git"
+  },
+  "keywords": [
+    "asm",
+    "assembly",
+    "assembler",
+    "8086",
+    "x86"
+  ],
+  "author": "Mark Isayan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/markisayan/x86asm-js/issues"
+  },
+  "homepage": "https://github.com/markisayan/x86asm-js#readme",
+  "dependencies": {
+    "mocha": "^4.0.1",
+    "should": "^13.1.2"
+  }
+}

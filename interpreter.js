@@ -10,7 +10,14 @@ class ASMInterpreter {
       // adc: "binaryArithmetic/adc",
       // sub: "binaryArithmetic/sub",
       // sbb: "binaryArithmetic/sbb",
-      mov: "move/mov"
+      mov: "move/mov",
+      clc: "flagManipulation/clc",
+      cld: "flagManipulation/cld",
+      cli: "flagManipulation/cli",
+      cmc: "flagManipulation/cmc",
+      stc: "flagManipulation/stc",
+      std: "flagManipulation/std",
+      sti: "flagManipulation/sti"
     };
 
     Object.keys(this.commands).forEach(key => {

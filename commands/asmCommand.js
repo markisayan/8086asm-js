@@ -7,9 +7,10 @@ class AsmCommand {
     this.commandArgTypes = commandArgTypes;
   }
 
-  fromHexToDecimal ( arg ) {
+  fromHexToImmediate ( arg ) {
     return parseInt(arg, 16)
   }
 }
 
 module.exports = AsmCommand;
+

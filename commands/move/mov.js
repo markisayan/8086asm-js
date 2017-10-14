@@ -8,14 +8,10 @@ class Mov extends AsmCommand {
     let commandArgTypes = [
       [
         argTypes.REGISTER,
-        argTypes.SPECIAL_PURPOSE_REGISTER,
-        argTypes.SEGMENT_REGISTER,
         argTypes.MEMORY
       ],
       [
         argTypes.REGISTER,
-        argTypes.SPECIAL_PURPOSE_REGISTER,
-        argTypes.SEGMENT_REGISTER,
         argTypes.MEMORY,
         argTypes.IMMEDIATE
       ]
@@ -39,8 +35,12 @@ class Mov extends AsmCommand {
     }
 
     if(this.interpreter.isRegister(dest) && this.interpreter.isRegister(src)){
-      if (dest[dest.length - 1] !== src[src.length - 1]) {
+      if (this.machine.isTwoByteRegister(dest) !== this.machine.isTwoByteRegister(src)) {
         throw new Error("Registers should have the same size");
+      }
+
+      if(dest === 'cs' || dest === 'ip'){
+        throw new Error("Destination can't be cs or ip registers");
       }
 
       const destRegName = dest;
@@ -50,10 +50,24 @@ class Mov extends AsmCommand {
       this.machine.setRegisterValue(destRegName, srcRegVal);
     }else if(this.interpreter.isRegister(dest) && this.interpreter.isImmediate(src)){
       const destRegName = dest;
-      const srcImmVal = this.fromHexToDecimal(src);
+      const srcImmVal = this.fromHexToImmediate(src);
+
+      if(destRegName === 'cs' || destRegName === 'ip'){
+        throw new Error("Destination can't be cs or ip registers");
+      }
+
+      if(this.interpreter.isOneByteRegister(dest) && srcImmVal > 0xff){
+        throw new Error("Value is bigger than 1 byte");
+      }
+
+      if(this.interpreter.isTwoByteRegister(dest) && srcImmVal > 0xffff){
+        throw new Error("Value is bigger than 2 bytes");
+      }
 
       this.machine.setRegisterValue(destRegName, srcImmVal);
     }
+
+    //TODO:
   }
 
 }
