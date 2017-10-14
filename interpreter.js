@@ -7,6 +7,7 @@ class ASMInterpreter {
   constructor ( machine ) {
     this.commands = {
       add: "binaryArithmetic/add",
+      adc: "binaryArithmetic/adc",
       // adc: "binaryArithmetic/adc",
       // sub: "binaryArithmetic/sub",
       // sbb: "binaryArithmetic/sbb",
